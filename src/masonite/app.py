@@ -480,5 +480,8 @@ class App:
     def is_production(self):
         return self.environment("production")
 
+    def is_running_tests(self):
+        return self.environment("testing")
+
     def __contains__(self, obj):
         return self.has(obj)

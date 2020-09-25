@@ -142,6 +142,13 @@ class TestApp(unittest.TestCase):
         self.assertEqual(self.app.is_production(), True)
         os.environ["APP_ENV"] = "staging"
         self.assertEqual(self.app.is_production(), False)
+    
+    def test_app_is_running_tests(self):
+        self.app.bind('Environ', os.environ)
+        os.environ["APP_ENV"] = "testing"
+        self.assertEqual(self.app.is_running_tests(), True)
+        os.environ["APP_ENV"] = "local"
+        self.assertEqual(self.app.is_running_tests(), False)
 
     def _func_on_resolve(self, request, container):
         request.path = '/on/resolve'
