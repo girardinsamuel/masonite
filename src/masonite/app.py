@@ -462,5 +462,23 @@ class App:
             )
         )
 
+    def environment(self, envs=None):
+        """Returns the current app environment. You may also pass arguments
+        to the environment method to check if the environment matches a 
+        given value."""
+        app_environment = self.make("Environ").get("APP_ENV", "")
+        if not envs:
+            return app_environment
+        elif isinstance(envs, list):
+            return app_environment in envs
+        else:
+            return app_environment == envs
+
+    def is_local(self):
+        return self.environment("local")
+
+    def is_production(self):
+        return self.environment("production")
+
     def __contains__(self, obj):
         return self.has(obj)

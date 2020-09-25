@@ -1,3 +1,4 @@
+import os
 from src.masonite.app import App
 from src.masonite.request import Request
 from src.masonite.testing import generate_wsgi
@@ -119,6 +120,28 @@ class TestApp(unittest.TestCase):
         self.assertEqual(publisher.exchange_type, 'indirect')
         self.assertEqual(publisher.routing_key, '')
 
+    def test_app_environment(self):
+        self.app.bind('Environ', os.environ)
+        os.environ["APP_ENV"] = "local"
+        self.assertEqual(self.app.environment(), "local")
+        self.assertEqual(self.app.environment("local"), True)
+        self.assertEqual(self.app.environment("staging"), False)
+        self.assertEqual(self.app.environment(["local", "dev"]), True)
+        self.assertEqual(self.app.environment(["production"]), False)
+
+    def test_app_is_local(self):
+        self.app.bind('Environ', os.environ)
+        os.environ["APP_ENV"] = "local"
+        self.assertEqual(self.app.is_local(), True)
+        os.environ["APP_ENV"] = "staging"
+        self.assertEqual(self.app.is_local(), False)
+
+    def test_app_is_production(self):
+        self.app.bind('Environ', os.environ)
+        os.environ["APP_ENV"] = "production"
+        self.assertEqual(self.app.is_production(), True)
+        os.environ["APP_ENV"] = "staging"
+        self.assertEqual(self.app.is_production(), False)
 
     def _func_on_resolve(self, request, container):
         request.path = '/on/resolve'
