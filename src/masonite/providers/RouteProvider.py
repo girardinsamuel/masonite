@@ -57,6 +57,9 @@ class RouteProvider(Provider):
                         response.view(data)
                 except Exception as e:
                     exception = e
+                    response = self.application.make("exception_handler").handle(
+                        exception
+                    )
 
                 self.application.make("middleware").run_route_middleware(
                     route.get_middlewares(), request, response, callback="after"

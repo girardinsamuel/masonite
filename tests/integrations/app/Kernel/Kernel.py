@@ -17,12 +17,15 @@ from src.masonite.middleware import (
 from src.masonite.routes import Route
 from src.masonite.utils.structures import load
 from src.masonite.utils.location import base_path
+from .AppExceptionHandler import AppExceptionHandler
+from ..middlewares.TimingMiddleware import TimingMiddleware
 
 
 class Kernel:
 
     http_middleware = [
         EncryptCookies,
+        TimingMiddleware,
         ClearDumpsBetweenRequestsMiddleware,
         IpMiddleware,
         MaintenanceModeMiddleware,
@@ -41,6 +44,9 @@ class Kernel:
         self.application = app
 
     def register(self):
+        self.application.bind(
+            "exception_handler", AppExceptionHandler(self.application)
+        )
         self.load_environment()
         self.register_configurations()
         self.register_middleware()

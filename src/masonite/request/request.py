@@ -182,3 +182,7 @@ class Request(ValidatesRequest, AuthorizesRequest):
     def accepts_json(self) -> bool:
         """Check if request Accept header contains application/json."""
         return "application/json" in str(self.header("Accept"))
+
+    def expects_json(self) -> bool:
+        """Check if request is expecting for a JSON response."""
+        return self.is_ajax() or self.accepts_json()

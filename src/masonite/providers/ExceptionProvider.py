@@ -8,13 +8,8 @@ from exceptionite.solutions import MasoniteSolutions
 from .Provider import Provider
 from ..routes import Route
 from ..configuration import config
-from ..exceptions.ExceptionHandler import ExceptionHandler
 from ..dumps import Dumper
-from ..exceptions import (
-    DumpExceptionHandler,
-    HttpExceptionHandler,
-    ModelNotFoundHandler,
-)
+
 from ..exceptions.exceptionite.controllers import ExceptioniteController
 from ..exceptions.exceptionite.tabs import DumpsTab
 from ..exceptions.exceptionite.blocks import RequestBlock, AppBlock, ConfigBlock
@@ -62,9 +57,11 @@ class ExceptionProvider(Provider):
             *MasoniteSolutions.get()
         )
 
-        exception_handler = ExceptionHandler(self.application)
-        exception_handler.add_driver("exceptionite", exceptionite)
-        self.application.bind("exception_handler", exception_handler)
+        # exception_handler = ExceptionHandler(self.application)
+        # self.application.bind("exception_handler", exception_handler)
+        self.application.make("exception_handler").add_driver(
+            "exceptionite", exceptionite
+        )
 
         # dumper
         dumper = Dumper(self.application)
@@ -72,15 +69,6 @@ class ExceptionProvider(Provider):
         builtins.dd = dumper.dd
         builtins.dump = dumper.dump
         builtins.clear_dumps = dumper.clear
-        self.application.bind(
-            "DumpExceptionHandler", DumpExceptionHandler(self.application)
-        )
-        self.application.bind(
-            "HttpExceptionHandler", HttpExceptionHandler(self.application)
-        )
-        self.application.bind(
-            "ModelNotFoundHandler", ModelNotFoundHandler(self.application)
-        )
 
     def boot(self):
         pass

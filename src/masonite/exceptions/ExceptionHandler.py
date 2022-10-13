@@ -1,5 +1,20 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..foundation import Application
+
+from . import (
+    DumpExceptionHandler,
+    HttpExceptionHandler,
+    ModelNotFoundHandler,
+)
+
+
 class ExceptionHandler:
-    def __init__(self, application, driver_config=None):
+
+    ignore = []
+
+    def __init__(self, application: "Application", driver_config=None):
         self.application = application
         self.drivers = {}
         self.driver_config = driver_config or {}
@@ -27,18 +42,33 @@ class ExceptionHandler:
 
         return self.driver_config.get(driver, {})
 
-    def handle(self, exception):
-        response = self.application.make("response")
-        request = self.application.make("request")
+    def context(self):
+        return {}
 
+    def report(self, exception):
+        """Masonite internal logic used to report an exception."""
+
+        if self.should_not_report(exception):
+            return
+
+        # fire an event
         self.application.make("event").fire(
             f"masonite.exception.{exception.__class__.__name__}", exception
         )
 
-        # add headers to response if any
-        if hasattr(exception, "get_headers"):
-            headers = exception.get_headers()
-            response.with_headers(headers)
+        # log the exception (TODO in logging PR)
+        context = {**self.context(), **exception.get_context()}
+        # Log.error(exception.get_message(), context=context)
+
+    def should_not_report(self, exception):
+        return exception.__class__ in self.ignore
+
+    def render_for_console(self, exception):
+        exceptionite = self.get_driver("exceptionite")
+        exceptionite.start(exception)
+        return exceptionite.render("terminal")
+
+    def render(self, exception):
 
         # if an exception handler is registered for this exception, use it instead
         if self.application.has(f"{exception.__class__.__name__}Handler"):
@@ -46,6 +76,8 @@ class ExceptionHandler:
                 f"{exception.__class__.__name__}Handler"
             ).handle(exception)
 
+        response = self.application.make("response")
+        request = self.application.make("request")
         # handle exception in production
         if not self.application.is_debug():
             # for HTTP error codes (500, 404, 403...) a specific page should be displayed
@@ -59,13 +91,53 @@ class ExceptionHandler:
             exception.get_status = lambda: 500
             exception.get_response = lambda: str(exception) or "Unknown error"
             return self.application.make("HttpExceptionHandler").handle(exception)
+        else:
+            # handle exception in development mode with Exceptionite
+            exceptionite = self.get_driver("exceptionite")
+            exceptionite.start(exception)
+            exceptionite.render("terminal")
+            if request.expects_json():
+                content = exceptionite.render("json")
+            else:
+                content = exceptionite.render("web")
+            return response.view(content, status=500)
 
-        # handle exception in development mode with Exceptionite
+    def enrich_exception(self, exception):
         exceptionite = self.get_driver("exceptionite")
         exceptionite.start(exception)
-        exceptionite.render("terminal")
+        stacktrace = exceptionite.stacktrace()
+        # add info
+        exception.get_namespace = lambda: exceptionite.namespace()
+        exception.get_stacktrace = lambda: stacktrace
+        exception.get_file = lambda: stacktrace.first().file
+        exception.get_lineno = lambda: stacktrace.first().lineno
+        if not hasattr(exception, "get_context"):
+            exception.get_context = lambda: {}
 
-        if request.accepts_json():
-            return response.view(exceptionite.render("json"), status=500)
+        return exception
+
+    def handle(self, exception):
+        self.enrich_exception(exception)
+        try:
+            self.report(exception)
+        except:
+            # if the code above or the user code in custom report() method throw an exception
+            # the app will crash and we don't want that, so this ensure that the user won't
+            # see a crash here but the handled exception
+            pass
+
+        if self.application.is_running_in_console():
+            return self.render_for_console(exception)
         else:
-            return response.view(exceptionite.render("web"), status=500)
+            return self.render(exception)
+
+    def register(self):
+        self.application.bind(
+            "DumpExceptionHandler", DumpExceptionHandler(self.application)
+        )
+        self.application.bind(
+            "HttpExceptionHandler", HttpExceptionHandler(self.application)
+        )
+        self.application.bind(
+            "ModelNotFoundHandler", ModelNotFoundHandler(self.application)
+        )
