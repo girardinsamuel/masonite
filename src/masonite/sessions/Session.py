@@ -121,7 +121,7 @@ class Session:
         """Check if key is present in active session."""
         return key in self.added or key in self.flashed or key in self.data
 
-    def get(self, key: str) -> Any:
+    def get(self, key: str, default="") -> Any:
         """Get value of the given key in active session."""
         if key in self.flashed:
             value = self.flashed.get(key)
@@ -136,7 +136,7 @@ class Session:
             self.save()
             return value
 
-        value = self.get_data().get(key)
+        value = self.get_data().get(key, default)
         try:
             if value is not None and not isinstance(value, MessageBag):
                 value = json.loads(value)

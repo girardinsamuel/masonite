@@ -6,7 +6,7 @@ from hmac import compare_digest
 
 class VerifyCsrfToken(Middleware):
 
-    exempt = []
+    exempt = ["/contact"]
 
     def before(self, request, response):
         self.verify_token(request, self.get_token(request))

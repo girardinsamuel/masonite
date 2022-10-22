@@ -4,3 +4,6 @@ class MockInput:
 
     def read(self, _):
         return self.data
+
+    def peek(self, _):
+        return self.data

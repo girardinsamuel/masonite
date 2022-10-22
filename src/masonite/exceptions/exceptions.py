@@ -216,3 +216,17 @@ class InvalidPackageName(Exception):
 
 class LoaderNotFound(Exception):
     pass
+
+
+class ValidationException(Exception):
+    def __init__(self, validator, redirect_url=None, status=422):
+        super().__init__("")
+        self.validator = validator
+        self.redirect_url = redirect_url
+        self.status = status
+
+    def get_errors(self):
+        return self.validator.errors()
+
+    def get_redirect_url(self):
+        return self.redirect_url

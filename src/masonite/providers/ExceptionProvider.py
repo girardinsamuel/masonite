@@ -14,6 +14,7 @@ from ..exceptions import (
     DumpExceptionHandler,
     HttpExceptionHandler,
     ModelNotFoundHandler,
+    ValidationExceptionHandler,
 )
 from ..exceptions.exceptionite.controllers import ExceptioniteController
 from ..exceptions.exceptionite.tabs import DumpsTab
@@ -80,6 +81,9 @@ class ExceptionProvider(Provider):
         )
         self.application.bind(
             "ModelNotFoundHandler", ModelNotFoundHandler(self.application)
+        )
+        self.application.bind(
+            "ValidationExceptionHandler", ValidationExceptionHandler(self.application)
         )
 
     def boot(self):

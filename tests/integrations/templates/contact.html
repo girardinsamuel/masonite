@@ -20,7 +20,7 @@
     @if errors.any()
     <div class="alert alert-danger">
         <ul>
-            @for key, message in errors.all().items()
+            @for message in errors.all()
             <li>{{ message }}</li>
             @endfor
         </ul>
@@ -33,18 +33,21 @@
             {{ csrf_field }}
             <div>
                 <label for="name">Name</label>
-                <input type="text" name="name" placeholder="Name">
+                <input type="text" name="name" placeholder="Name" value="{{ old('name') }}">
                 @if errors.has('name')
-                <code>{{ errors.get('name')[0] }}</code>
+                <code>{{ errors.first('name') }}</code>
                 @endif
             </div>
             <div>
                 <label for="email">Email</label>
-                <input type="email" name="email" placeholder="Email">
+                <input type="email" name="email" placeholder="Email" value="{{ old('email') }}">
+                @if errors.has('email')
+                <code>{{ errors.first('email') }}</code>
+                @endif
             </div>
             <div>
                 <label for="message">Message</label>
-                <textarea name="message" placeholder="Message"></textarea>
+                <textarea name="message" placeholder="Message" value="{{ old('message') }}"></textarea>
             </div>
             <button type="submit">Send</button>
         </form>

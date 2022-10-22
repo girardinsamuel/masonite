@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from ..validation import Validator
+from ..validation.ValidatorTwo import Validator
 
 if TYPE_CHECKING:
     from ..validation import RuleEnclosure, MessageBag
@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 class ValidatesRequest:
     """Request mixin to add inputs validation to requests."""
 
-    def validate(self, *rules: "str|dict|RuleEnclosure") -> "MessageBag":
+    def validate(self, *rules: "dict|RuleEnclosure") -> "MessageBag":
         """Validate request inputs against the given rules."""
-        validator = Validator()
-        return validator.validate(self.all(), *rules)
+        validator = Validator(self.all(), *rules)
+        return validator.validate()

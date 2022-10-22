@@ -1,7 +1,7 @@
 """Helpers for multiple data structures"""
 import importlib
 from importlib.abc import Loader
-from dotty_dict import dotty
+from dotty_dict import Dotty, dotty
 
 from ..exceptions.exceptions import LoaderNotFound
 
@@ -52,7 +52,10 @@ def data(dictionary={}):
     Returns:
         {dict} -- A dot dictionary
     """
-    return dotty(dictionary)
+    if isinstance(dictionary, Dotty):
+        return dictionary
+    else:
+        return dotty(dictionary)
 
 
 def data_get(dictionary, key, default=None):

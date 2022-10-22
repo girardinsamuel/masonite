@@ -50,7 +50,8 @@ class InputBag:
                 except (ValueError):
                     request_body_size = 0
 
-                request_body = environ["wsgi.input"].read(request_body_size)
+                # as tcan be read twice because of form request instantiation, use peek instead of read
+                request_body = environ["wsgi.input"].peek(request_body_size)
                 parsed_request_body = parse_qs(bytes(request_body).decode("utf-8"))
 
                 self.post_data = self.parse_dict(parsed_request_body)

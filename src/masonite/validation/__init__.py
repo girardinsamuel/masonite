@@ -1,16 +1,17 @@
 from .RuleEnclosure import RuleEnclosure
 from .MessageBag import MessageBag
-from .Validator import (
-    BaseValidation,
+from .Validator import Validator
+from .BaseRule import BaseRule
+from .Form import Form
+from .rules import (
     ValidationFactory,
-    Validator,
     accepted,
     boolean,
     active_domain,
     after_today,
     before_today,
     confirmed,
-    contains,
+    # contains,
     date,
     different,
     distinct,

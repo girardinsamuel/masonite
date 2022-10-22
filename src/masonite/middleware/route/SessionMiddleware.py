@@ -16,8 +16,16 @@ class SessionMiddleware(Middleware):
         request.app.make("response").with_success = self.with_success
         request.app.make("request").session = Session
 
+        # save previous url if needed
+        if (
+            request.get_request_method() == "GET"
+            and not request.is_ajax()
+            and request.get_route()
+        ):
+            Session.set("_previous.url", request.get_path_with_query())
+
         # TODO: Remove in Masonite 5
-        request.app.make("view").share({"bag": MessageBag(Session.get("errors") or {}).helper})
+        # request.app.make("view").share({"bag": MessageBag(Session.get("errors") or {}).helper})
         return request
 
     def after(self, request, _):

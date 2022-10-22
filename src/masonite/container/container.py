@@ -29,6 +29,9 @@ class Container:
     swaps = {}
     _remembered = {}
 
+    resolving_callbacks = {}
+    after_resolving_callbacks = {}
+
     def bind(self, name, class_obj):
         """Bind classes into the container with a key value pair.
 
@@ -165,6 +168,14 @@ class Container:
         """
         return self
 
+    def resolving(self, name, callback):
+        # callback will be called with (obj, app)
+        self.resolving_callbacks.update({name: callback})
+
+    def after_resolving(self, name, callback):
+        # callback will be called with (obj, app)
+        self.after_resolving_callbacks.update({name: callback})
+
     def resolve(self, obj, *resolving_arguments):
         """Takes an object such as a function or class method and resolves it's
         parameters from objects in the container.
@@ -202,7 +213,13 @@ class Container:
                 raise ContainerError(str(e))
         else:
             for _, value in self.get_parameters(obj):
-                if type(value.annotation) in (str, int, dict, list, tuple) or value.annotation in (str, int, dict, list, tuple):
+                if type(value.annotation) in (
+                    str,
+                    int,
+                    dict,
+                    list,
+                    tuple,
+                ) or value.annotation in (str, int, dict, list, tuple):
                     # Ignore any times a user is simply type hinting a parameter like (parameter:str or parameter:"str").
                     # In this case we don't want to resolve anything but we do want
                     # to insert any passing arguments we passed in
@@ -256,7 +273,36 @@ class Container:
                     obj.__module__, obj.__self__.__class__.__name__, obj.__name__
                 )
                 self._remembered[signature] = objects
-        return obj(*objects)
+
+        instantiated_obj = obj(*objects)
+
+        # fire resolving callbacks if any
+        callbacks_for_type = []
+        for class_type, callback in self.resolving_callbacks.items():
+            if inspect.isclass(obj):
+                obj_class = obj
+            else:
+                obj_class = obj.__class__
+            if issubclass(obj_class, class_type):
+                callbacks_for_type.append(callback)
+
+        for resolving_callback in callbacks_for_type:
+            instantiated_obj = resolving_callback(instantiated_obj, self)
+
+        # fire after resolving callbacks if any
+        callbacks_for_type = []
+        for class_type, callback in self.after_resolving_callbacks.items():
+            if inspect.isclass(obj):
+                obj_class = obj
+            else:
+                obj_class = obj.__class__
+            if issubclass(obj_class, class_type):
+                callbacks_for_type.append(callback)
+
+        for resolving_callback in callbacks_for_type:
+            instantiated_obj = resolving_callback(instantiated_obj, self)
+
+        return instantiated_obj
 
     def collect(self, search):
         """Fetch a dictionary of objects using a search query.

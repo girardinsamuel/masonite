@@ -1,4 +1,5 @@
 from multiprocessing import AuthenticationError
+
 from src.masonite.controllers import Controller
 from src.masonite.exceptions.exceptions import AuthorizationException
 from src.masonite.views import View
@@ -10,6 +11,8 @@ from src.masonite.facades import Session, Config, Gate, Dump
 from src.masonite.validation import Validator
 
 from tests.integrations.app.User import User
+
+from ..app.form_requests import ContactForm
 
 
 class CanBroadcast:
@@ -43,16 +46,29 @@ class WelcomeController(Controller):
         return view.render("contact")
 
     def contact_post(
-        self, request: Request, view: View, validator: Validator, response: Response
+        self,
+        request: Request,
+        # form: ContactForm,
+        view: View,
+        response: Response,
     ):
-        errors = request.validate(validator.required(["name", "email"]))
-        if errors:
-            return response.back().with_errors(errors)
+        validator = request.validate({"name": "required", "email": "required|email"})
+        # print(validator.valid())
+        # print(validator.errors())
+        if validator.invalid():
+            return response.back().with_errors(validator.errors()).with_input()
+
+        print(validator.validated())
 
         return view.render("contact")
 
-    def flash_data(self, request: Request, response: Response, view: View):
+    def flash_data(
+        self, request: Request, response: Response, view: View, validator: Validator
+    ):
         request.app.make("session").flash("test", "value")
+        request.validate(
+            validator.required(["message"]),
+        )
         return response.with_input().redirect("/sessions")
 
     def form_with_input(self, request: Request, response: Response, view: View):

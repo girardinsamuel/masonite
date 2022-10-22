@@ -22,7 +22,7 @@ class MessageBag:
 
     def all(self):
         """Get all errors and messages"""
-        return self.items
+        return self.items.values()
 
     def any(self):
         """If the messagebag has any errors"""
@@ -30,7 +30,7 @@ class MessageBag:
 
     def has(self, key):
         """If the messagebag has any errors"""
-        return key in self.all()
+        return key in self.items
 
     def empty(self):
         """If the messagebag has any errors"""
@@ -38,7 +38,10 @@ class MessageBag:
 
     def first(self, key):
         """Gets the first error and message"""
-        return self.get(key)[0]
+        if self.has(key):
+            return self.get(key)[0]
+        else:
+            return None
 
     def count(self):
         """Gets the amount of errors"""
@@ -72,15 +75,19 @@ class MessageBag:
 
     def errors(self):
         """Gets a list of errors"""
-        return list(self.items.keys())
+        return self.items
 
     def messages(self):
         """Gets a list of all the messages"""
-        messages = []
-        for error, message in self.items.items():
-            messages += message
+        messages_list = []
+        for message in self.items.values():
+            if isinstance(message, list):
+                for submessage in message:
+                    messages_list.append(message)
+            else:
+                messages_list += message
 
-        return messages
+        return messages_list
 
     def reset(self):
         """Gets a list of all the messages"""
