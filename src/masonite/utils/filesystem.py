@@ -120,6 +120,19 @@ class FileSystem:
         return extension
 
     @staticmethod
+    def size(path: str) -> int:
+        """Compute file size in bytes."""
+        # a bit faster than os.path.getsize()
+        return os.stat(path).st_size
+
+    @staticmethod
+    def human_size(path: str) -> str:
+        """Compute file size and return it as human string representation."""
+        from hfilesize import FileSize
+
+        return FileSize(FileSystem.size(path)).format()
+
+    @staticmethod
     def hash(path: str | bytes, algorithm: str = "md5") -> str:
         """Compute file hash with given algorithm from a content of a file."""
         try:

@@ -129,6 +129,16 @@ class TestFileSystem(TestCase, TestFilesAndDirs):
             FileSystem.extension("file-without-extension", without_dot=True), ""
         )
 
+    def test_size(self):
+        path = self.create_file("doc.pdf", "hello")
+        path2 = self.create_file("doc2.pdf", "hello I am bigger !")
+        assert FileSystem.size(path) > 0
+        assert FileSystem.size(path2) > FileSystem.size(path)
+
+    def test_human_size(self):
+        path = self.create_file("doc.pdf", "hello")
+        assert isinstance(FileSystem.human_size(path), str)
+
     def test_basename(self):
         assert FileSystem.basename("test/path/file.pdf") == "file.pdf"
 
