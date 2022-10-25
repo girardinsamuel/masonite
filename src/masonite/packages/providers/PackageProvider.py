@@ -17,7 +17,7 @@ from ...utils.time import migration_timestamp
 from ...routes import Route
 from ...utils.structures import load
 from ...utils.str import modularize, as_filepath
-from ...utils.filesystem import make_directory
+from ...utils.filesystem import FileSystem
 
 from ..reserved_names import PACKAGE_RESERVED_NAMES
 from ..Package import Package
@@ -54,7 +54,7 @@ class PackageProvider(Provider):
                 continue
             for source, dest in resource.files:
                 if not dry:
-                    make_directory(dest)
+                    FileSystem.make_directory(dest)
                     shutil.copy(source, dest)
                 published_resources[resource.key].append(relpath(dest, project_root))
         return published_resources

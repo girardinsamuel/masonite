@@ -71,8 +71,13 @@ class WelcomeController(Controller):
     def view(self, view: View):
         return view.render("welcome")
 
-    def upload(self, request: Request, storage: Storage):
-        return storage.disk("s3").store(request.input("profile"))
+    def upload(self, request: Request, storage: Storage, response: Response):
+        avatar = request.input("avatar")
+        dump(avatar.get_infos())
+        path = avatar.store_as("avatars", "my_avatar")
+        dump(path)
+        return response.back()
+        # return storage.disk("s3").store(request.input("profile"))
 
     def create(self):
         return "user created", 201

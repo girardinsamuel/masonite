@@ -54,7 +54,9 @@ class TestCase(unittest.TestCase):
             self.startTestRun()
 
         if hasattr(self, "connection") and self.connection:
-            self.application.make("resolver")._connection_details["default"] = self.connection
+            self.application.make("resolver")._connection_details[
+                "default"
+            ] = self.connection
 
         self.withoutCsrf()
 

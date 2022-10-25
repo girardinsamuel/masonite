@@ -2,7 +2,7 @@
 import inflection
 import os
 
-from ..utils.filesystem import make_directory
+from ..utils.filesystem import FileSystem
 from .Command import Command
 
 
@@ -38,7 +38,7 @@ class MakePolicyCommand(Command):
             self.app.make("policies.location").replace(".", "/"), name + ".py"
         )
 
-        make_directory(file_name)
+        FileSystem.make_directory(filepath)
         if os.path.exists(file_name) and not self.option("force"):
             self.warning(
                 f"{file_name} already exists! Run the command with -f (force) to override."

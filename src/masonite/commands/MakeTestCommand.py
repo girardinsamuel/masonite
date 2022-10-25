@@ -2,7 +2,7 @@
 import inflection
 import os
 
-from ..utils.filesystem import make_directory, render_stub_file, get_module_dir
+from ..utils.filesystem import FileSystem, render_stub_file, get_module_dir
 from .Command import Command
 
 
@@ -27,7 +27,7 @@ class MakeTestCommand(Command):
         content = render_stub_file(self.get_testcase_path(), name)
 
         filepath = os.path.join(directory, test_filename)
-        make_directory(filepath)
+        FileSystem.make_directory(filepath)
         if os.path.exists(filepath) and not self.option("force"):
             self.warning(
                 f"{filepath} already exists! Run the command with -f (force) to override."

@@ -3,7 +3,7 @@ import inflection
 import os
 
 from ..utils.location import base_path
-from ..utils.filesystem import get_module_dir, make_directory, render_stub_file
+from ..utils.filesystem import get_module_dir, FileSystem, render_stub_file
 from .Command import Command
 
 
@@ -31,7 +31,7 @@ class MakeMiddlewareCommand(Command):
             self.app.make("middlewares.location"), name + ".py"
         )
         filepath = base_path(relative_filename)
-        make_directory(filepath)
+        FileSystem.make_directory(filepath)
         if os.path.exists(relative_filename) and not self.option("force"):
             self.warning(
                 f"{relative_filename} already exists! Run the command with -f (force) to override."

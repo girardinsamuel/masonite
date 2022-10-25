@@ -1,7 +1,7 @@
 """New Queue Table Command."""
 import os
 
-from ..utils.filesystem import make_directory, get_module_dir
+from ..utils.filesystem import FileSystem, get_module_dir
 from ..utils.time import migration_timestamp
 from ..utils.location import base_path
 from .Command import Command
@@ -28,7 +28,7 @@ class QueueTableCommand(Command):
             f"{migration_timestamp()}_create_queue_jobs_table.py",
         )
         filepath = base_path(relative_filename)
-        make_directory(filepath)
+        FileSystem.make_directory(filepath)
 
         with open(filepath, "w") as fp:
             fp.write(output)

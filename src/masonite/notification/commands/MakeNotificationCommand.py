@@ -2,7 +2,7 @@
 import inflection
 import os
 
-from ...utils.filesystem import get_module_dir, make_directory, render_stub_file
+from ...utils.filesystem import get_module_dir, FileSystem, render_stub_file
 from ...utils.location import base_path
 from ...utils.str import as_filepath
 from ...commands.Command import Command
@@ -30,7 +30,7 @@ class MakeNotificationCommand(Command):
             as_filepath(self.app.make("notifications.location")), name + ".py"
         )
         filepath = base_path(relative_filename)
-        make_directory(filepath)
+        FileSystem.make_directory(filepath)
         if os.path.exists(filepath) and not self.option("force"):
             self.warning(
                 f"{filepath} already exists! Run the command with -f (force) to override."

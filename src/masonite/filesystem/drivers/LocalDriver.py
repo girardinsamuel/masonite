@@ -5,7 +5,8 @@ from shutil import copyfile, move
 
 from ..FileStream import FileStream
 from ..File import File
-from ...utils.filesystem import get_extension
+from ..File2 import UploadedFile
+from ...utils.filesystem import FileSystem
 
 
 class LocalDriver:
@@ -23,7 +24,7 @@ class LocalDriver:
         return file_path
 
     def get_name(self, path, alias):
-        extension = get_extension(path)
+        extension = FileSystem.extension(path)
         return f"{alias}{extension}"
 
     def put(self, file_path, content):
@@ -36,7 +37,10 @@ class LocalDriver:
         return content
 
     def put_file(self, file_path, content, name=None):
-        file_name = self.get_name(content.name, name or str(uuid.uuid4()))
+        if isinstance(content, UploadedFile):
+            file_name = name or content.hash_name()
+        else:
+            file_name = self.get_name(content.name, name or str(uuid.uuid4()))
 
         if hasattr(content, "get_content"):
             content = content.get_content()
@@ -121,3 +125,11 @@ class LocalDriver:
             files.append(File(self.get(f), f))
 
         return files
+
+    def get_url(self, path: str):
+        path = os.path.join("/storage", path)
+
+        if "/storage/public" in path:
+            path = path.replace("/public", "", 1)
+
+        return path

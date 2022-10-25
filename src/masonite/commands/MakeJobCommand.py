@@ -2,7 +2,7 @@
 import inflection
 import os
 
-from ..utils.filesystem import make_directory, render_stub_file, get_module_dir
+from ..utils.filesystem import FileSystem, render_stub_file, get_module_dir
 from ..utils.location import jobs_path
 from .Command import Command
 
@@ -26,7 +26,7 @@ class MakeJobCommand(Command):
 
         filename = f"{name}.py"
         filepath = jobs_path(filename)
-        make_directory(filepath)
+        FileSystem.make_directory(filepath)
         if os.path.exists(filepath) and not self.option("force"):
             self.warning(
                 f"{filepath} already exists! Run the command with -f (force) to override."

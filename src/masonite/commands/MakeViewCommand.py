@@ -3,7 +3,7 @@ import inflection
 import os
 
 from ..utils.location import views_path
-from ..utils.filesystem import get_module_dir, render_stub_file, make_directory
+from ..utils.filesystem import get_module_dir, render_stub_file, FileSystem
 from .Command import Command
 
 
@@ -27,7 +27,7 @@ class MakeViewCommand(Command):
 
         filename = f"{name}.html"
         path = views_path(filename)
-        make_directory(path)
+        FileSystem.make_directory(path)
         if os.path.exists(path) and not self.option("force"):
             self.warning(
                 f"{path} already exists! Run the command with -f (force) to override."

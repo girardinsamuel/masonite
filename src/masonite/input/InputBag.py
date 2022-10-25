@@ -5,7 +5,7 @@ import json
 import cgi
 import re
 from ..utils.structures import data_get
-from ..filesystem import UploadedFile
+from ..filesystem.File2 import UploadedFile
 
 
 class InputBag:
@@ -69,13 +69,25 @@ class InputBag:
                         k = 0
                         for item in value:
                             files.append(
-                                UploadedFile(fields[name][k].filename, value[k])
+                                UploadedFile(
+                                    fields[name][k].filename,
+                                    fields[name][k].type,
+                                    value[k],
+                                )
                             )
                             k += 1
                         self.post_data.update({name: files})
                     elif isinstance(value, bytes):
                         self.post_data.update(
-                            {name: [UploadedFile(fields[name].filename, value)]}
+                            {
+                                name: [
+                                    UploadedFile(
+                                        fields[name].filename,
+                                        fields[name].type,
+                                        value,
+                                    )
+                                ]
+                            }
                         )
                     else:
                         self.post_data.update({name: value})

@@ -3,7 +3,7 @@ from cleo import Command
 import inflection
 import os
 
-from ...utils.filesystem import make_directory, get_module_dir, render_stub_file
+from ...utils.filesystem import FileSystem, get_module_dir, render_stub_file
 from ...utils.location import base_path
 from ...utils.str import as_filepath
 
@@ -29,7 +29,7 @@ class MakeEventCommand(Command):
             as_filepath(self.app.make("events.location")), name + ".py"
         )
         filepath = base_path(relative_filename)
-        make_directory(filepath)
+        FileSystem.make_directory(filepath)
 
         with open(filepath, "w") as f:
             f.write(content)

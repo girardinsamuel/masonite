@@ -49,3 +49,12 @@ class TestLocalStorage(TestCase):
 
         name = self.driver.get_name("some_file.tar.gz", "archive")
         self.assertEqual(name, "archive.tar.gz")
+
+    def test_can_get_url(self):
+        self.driver.append("logs/world.log", "hello")
+        url = self.driver.get_url("logs/world.log")
+        self.assertEqual(url, "/storage/logs/world.log")
+
+        self.driver.append("public/avatar.png", "hello")
+        url = self.driver.get_url("public/avatar.png")
+        self.assertEqual(url, "/storage/avatar.png")

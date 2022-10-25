@@ -3,7 +3,7 @@ import shutil
 import os
 
 from .Preset import Preset
-from ..utils.filesystem import make_directory
+from ..utils.filesystem import FileSystem
 from ..utils.location import resources_path, views_path
 
 
@@ -36,7 +36,7 @@ class React(Preset):
         """Copy example React component into application (delete example Vue component
         if it exists)"""
         # make components directory if does not exists
-        make_directory(resources_path("js/components/Example.js"))
+        FileSystem.make_directory(resources_path("js/components/Example.js"))
 
         # delete Vue components if exists
         vue_files = [

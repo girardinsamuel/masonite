@@ -20,6 +20,15 @@ Hello. Setup chat connection here
         <button type="submit">Submit</button>
         <!-- <a href="/flash_data">Flash Data to session</a> -->
     </form>
+
+    <!-- test upload -->
+    <h2>file upload</h2>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        {{ csrf_field }}
+        <input type="file" name="avatar" value="{{ old('avatar') }}">
+        <button type="submit">Upload</button>
+    </form>
+
     <script>
         const pusher = new Pusher("", {
             authEndpoint: '/broadcasting/authorize',

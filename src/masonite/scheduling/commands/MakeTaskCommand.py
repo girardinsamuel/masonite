@@ -2,7 +2,7 @@
 import os
 import inflection
 
-from ...utils.filesystem import make_directory, get_module_dir, render_stub_file
+from ...utils.filesystem import FileSystem, get_module_dir, render_stub_file
 from ...utils.location import base_path
 from ...utils.str import as_filepath
 from ...commands.Command import Command
@@ -37,7 +37,7 @@ class MakeTaskCommand(Command):
             )
             return -1
 
-        make_directory(filepath)
+        FileSystem.make_directory(filepath)
         with open(filepath, "w") as fp:
             fp.write(output)
 

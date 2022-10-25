@@ -2,7 +2,7 @@
 import shutil
 
 from ..utils.location import resources_path
-from ..utils.filesystem import make_full_directory
+from ..utils.filesystem import FileSystem
 from .Preset import Preset
 
 
@@ -28,7 +28,7 @@ class Bootstrap(Preset):
 
     def update_css(self):
         """Create/Override an app.scss file configured for the preset."""
-        make_full_directory(resources_path("css"))
+        FileSystem.make_directory(resources_path("css"))
         shutil.copyfile(
             self.get_template_path("_variables.scss"),
             resources_path("css/_variables.scss"),

@@ -2,7 +2,7 @@
 import inflection
 import os
 
-from ...utils.filesystem import get_module_dir, make_directory, render_stub_file
+from ...utils.filesystem import get_module_dir, FileSystem, render_stub_file
 from ...utils.location import base_path
 from ...utils.str import as_filepath
 from ...commands.Command import Command
@@ -36,7 +36,7 @@ class MakeRuleEnclosureCommand(Command):
             return -1
 
         filepath = base_path(relative_filename)
-        make_directory(filepath)
+        FileSystem.make_directory(filepath)
 
         with open(filepath, "w") as f:
             f.write(content)

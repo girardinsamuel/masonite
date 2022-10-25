@@ -1,6 +1,6 @@
 import hashlib
 
-from ..utils.filesystem import get_extension
+from ..utils.filesystem import FileSystem
 
 
 class File:
@@ -12,7 +12,7 @@ class File:
         pass
 
     def extension(self):
-        return get_extension(self.filename)
+        return FileSystem.extension(self.filename)
 
     def name(self):
         return self.filename

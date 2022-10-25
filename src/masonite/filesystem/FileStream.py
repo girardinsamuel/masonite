@@ -1,6 +1,6 @@
 import os
 
-from ..utils.filesystem import get_extension
+from ..utils.filesystem import FileSystem
 
 
 class FileStream:
@@ -12,7 +12,7 @@ class FileStream:
         return self.stream.name
 
     def extension(self):
-        return get_extension(self._name or self.path())
+        return FileSystem.extension(self._name or self.path())
 
     def name(self):
         return self._name or os.path.basename(self.path())

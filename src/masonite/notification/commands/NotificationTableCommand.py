@@ -2,7 +2,7 @@
 from cleo import Command
 import os
 
-from ...utils.filesystem import get_module_dir, make_directory
+from ...utils.filesystem import get_module_dir, FileSystem
 from ...utils.time import migration_timestamp
 from ...utils.location import base_path
 
@@ -29,7 +29,7 @@ class NotificationTableCommand(Command):
             f"{migration_timestamp()}_create_notifications_table.py",
         )
         filepath = base_path(relative_filename)
-        make_directory(filepath)
+        FileSystem.make_directory(filepath)
 
         with open(filepath, "w") as fp:
             fp.write(output)

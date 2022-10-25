@@ -3,7 +3,7 @@ import inflection
 import os
 
 from ..utils.location import base_path
-from ..utils.filesystem import make_directory, render_stub_file, get_module_dir
+from ..utils.filesystem import FileSystem, render_stub_file, get_module_dir
 from .Command import Command
 
 
@@ -30,7 +30,7 @@ class MakeCommandCommand(Command):
             self.app.make("commands.location"), name + ".py"
         )
         filepath = base_path(relative_filename)
-        make_directory(filepath)
+        FileSystem.make_directory(filepath)
         if os.path.exists(filepath) and not self.option("force"):
             self.warning(
                 f"{filepath} already exists! Run the command with -f (force) to override."

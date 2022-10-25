@@ -1,5 +1,5 @@
 import os
-from ...utils.filesystem import make_full_directory, modified_date
+from ...utils.filesystem import FileSystem
 from pathlib import Path
 import pendulum
 import json
@@ -13,7 +13,7 @@ class FileDriver:
     def set_options(self, options):
         self.options = options
         if options.get("location"):
-            make_full_directory(options.get("location"))
+            FileSystem.make_directory(options.get("location"))
         return self
 
     def add(self, key, value, seconds=None):
@@ -85,7 +85,7 @@ class FileDriver:
         return self.options.get("location")
 
     def get_modified_at(self, filename):
-        return pendulum.from_timestamp(modified_date(filename))
+        return pendulum.from_timestamp(FileSystem.last_modified(filename))
 
     def get_expiration_time(self, seconds):
         if seconds is None:

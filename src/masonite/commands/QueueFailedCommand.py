@@ -1,7 +1,7 @@
 """Queue Failed Command."""
 import os
 
-from ..utils.filesystem import make_directory, get_module_dir
+from ..utils.filesystem import FileSystem, get_module_dir
 from ..utils.time import migration_timestamp
 from ..utils.location import base_path
 from .Command import Command
@@ -25,7 +25,7 @@ class QueueFailedCommand(Command):
 
         filename = f"{migration_timestamp()}_create_failed_jobs_table.py"
         path = os.path.join(base_path(self.option("directory")), filename)
-        make_directory(path)
+        FileSystem.make_directory(path)
 
         with open(path, "w") as fp:
             fp.write(output)
