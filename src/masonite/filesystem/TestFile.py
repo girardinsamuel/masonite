@@ -1,4 +1,4 @@
-from .File2 import UploadedFile
+from .UploadedFile import UploadedFile
 import tempfile
 from ..utils.filesystem import mimetypes
 

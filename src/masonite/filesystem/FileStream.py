@@ -9,7 +9,7 @@ class FileStream:
         self._name = name
 
     def path(self):
-        return self.stream.name
+        return self._name or self.stream.name
 
     def extension(self):
         return FileSystem.extension(self._name or self.path())

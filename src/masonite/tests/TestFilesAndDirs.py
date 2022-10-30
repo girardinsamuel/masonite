@@ -23,5 +23,8 @@ class TestFilesAndDirs:
     def get_path(self, path: str = ""):
         return os.path.join(self.tmp_root_dir, path)
 
+    def get_root(self) -> str:
+        return self.tmp_root_dir
+
     def stopTestRun(self):
         return self

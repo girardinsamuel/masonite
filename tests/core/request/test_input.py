@@ -1,40 +1,12 @@
-import binascii
 import os
-import json
-import io
 
+from tests import TestCase
 from src.masonite.input import InputBag
 from src.masonite.tests import MockInput
-from tests import TestCase
+from src.masonite.utils.http import RequestFile, generate_wsgi_form_data
 
 
-def encode_multipart_formdata(fields):
-    boundary = binascii.hexlify(os.urandom(16)).decode("ascii")
-
-    body = (
-        "".join(
-            "--%s\r\n"
-            'Content-Disposition: form-data; name="%s"\r\n'
-            "\r\n"
-            "%s\r\n" % (boundary, field, value)
-            for field, value in fields.items()
-        )
-        + "--%s--\r\n" % boundary
-    )
-
-    content_type = "multipart/form-data; boundary=%s" % boundary
-
-    return body, content_type
-
-
-class TestInput(TestCase):
-    def setUp(self):
-        super().setUp()
-        self.post_data = MockInput(
-            '{"param": "hey", "foo": [9, 8, 7, 6], "bar": "baz"}'
-        )
-        self.bytes_data = MockInput(b"jack=Daniels")
-
+class TestInputBag(TestCase):
     def test_can_parse_query_string(self):
         bag = InputBag()
         bag.load({"QUERY_STRING": "hello=you&goodbye=me"})
@@ -43,29 +15,18 @@ class TestInput(TestCase):
 
     def test_can_parse_post_data(self):
         bag = InputBag()
-        bag.load(
-            {
-                "CONTENT_LENGTH": len(str(json.dumps({"__token": 1}))),
-                "wsgi.input": io.BytesIO(bytes(json.dumps({"__token": 1}), "utf-8")),
-            }
-        )
+        bag.load(generate_wsgi_form_data({"__token": 1}))
         self.assertEqual(bag.get("__token"), 1)
 
     def test_can_parse_duplicate_values(self):
         bag = InputBag()
         bag.load({"QUERY_STRING": "filter[name]=Joe&filter[last]=Bill"})
-        """
-            {"filter": [{}]}
-        """
         self.assertTrue("name" in bag.get("filter"))
         self.assertTrue("last" in bag.get("filter"))
 
     def test_all_with_values(self):
         bag = InputBag()
         bag.load({"QUERY_STRING": "hello=you"})
-        """
-            {"filter": [{}]}
-        """
         self.assertEqual(bag.all_as_values(), {"hello": "you"})
 
     def test_can_get_defaults(self):
@@ -80,9 +41,6 @@ class TestInput(TestCase):
     def test_all_without_internal_values(self):
         bag = InputBag()
         bag.load({"QUERY_STRING": "hello=you&__token=tok"})
-        """
-            {"filter": [{}]}
-        """
         self.assertEqual(bag.all_as_values(internal_variables=False), {"hello": "you"})
 
     def test_has(self):
@@ -112,32 +70,31 @@ class TestInput(TestCase):
         self.assertEqual(bag.get("param"), "hey")
 
     def test_can_parse_application_json_content_type(self):
+        data = generate_wsgi_form_data(
+            {"param": "hey", "foo": [9, 8, 7, 6], "bar": "baz"}
+        )
         bag = InputBag()
-        bag.load({"wsgi.input": self.post_data, "CONTENT_TYPE": "application/json"})
+        bag.load(data)
         self.assertEqual(bag.get("param"), "hey")
+        self.assertEqual(bag.get("foo"), [9, 8, 7, 6])
 
     def test_can_parse_form_urlencoded_content_type(self):
-        bag = InputBag()
-        bag.load(
-            {
-                "wsgi.input": self.bytes_data,
-                "CONTENT_TYPE": "application/x-www-form-urlencoded",
-            }
+        data = generate_wsgi_form_data(
+            {"jack": "Daniels"}, content_type="application/x-www-form-urlencoded"
         )
+        bag = InputBag()
+        bag.load(data)
         self.assertEqual(bag.get("jack"), "Daniels")
 
     def test_can_parse_multipart_formdata_content_type(self):
-        data, content_type = encode_multipart_formdata({"key": "value", "test": 1})
-        bag = InputBag()
-        bag.load(
-            {
-                "REQUEST_METHOD": "POST",
-                "CONTENT_TYPE": content_type,
-                "CONTENT_LENGTH": str(len(data.encode("utf-8"))),
-                "wsgi.input": io.BytesIO(data.encode("utf-8")),
-            }
+        data = generate_wsgi_form_data(
+            {"key": "value", "test": 1}, content_type="multipart/form-data"
         )
+        bag = InputBag()
+        bag.load(data)
+        import pdb
 
+        pdb.set_trace()
         self.assertEqual(bag.get("key"), "value")
         self.assertEqual(bag.get("test"), "1")
 
@@ -157,15 +114,26 @@ class TestInput(TestCase):
         )
 
     def test_can_parse_nested_post_data(self):
-        # application/json
+        data = generate_wsgi_form_data({"key": "val", "a": {"b": {"c": 1}}})
         bag = InputBag()
-        data = {"key": "val", "a": {"b": {"c": 1}}}
-        bag.load(
-            {
-                "CONTENT_TYPE": "application/json",
-                "CONTENT_LENGTH": len(str(json.dumps(data))),
-                "wsgi.input": io.BytesIO(bytes(json.dumps(data), "utf-8")),
-            }
-        )
+        bag.load(data)
         self.assertEqual(bag.get("key"), "val")
         self.assertEqual(bag.get("a.b.c"), 1)
+
+    def test_can_parse_files_with_multipart_form_data_encoding(self):
+        data = generate_wsgi_form_data(
+            {"name": "sam", "avatar": RequestFile("avatar.png", "image/png", "hello")},
+            "multipart/form-data",
+        )
+        bag = InputBag()
+        bag.load(data)
+        # can parse normal data
+        self.assertEqual(bag.get("name"), "sam")
+        # can parse file data
+        self.assertIsInstance(bag.get("avatar"), UploadedFile)
+        self.assertEqual(bag.get("avatar").filename, "avatar.png")
+        self.assertEqual(bag.get("avatar").get_original_mimetype(), "image/png")
+        self.assertEqual(bag.get("avatar").get_content(), "hello")
+
+    def test_can_parse_files_with_form_urlencoded_encoding(self):
+        pass

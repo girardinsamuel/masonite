@@ -18,21 +18,21 @@ if TYPE_CHECKING:
     from pendulum import DateTime
     from masoniteorm.models import Model
 
-from ..cookies import CookieJar
 from ..routes import Route
-from ..utils.http import generate_wsgi
+from ..utils.http import generate_wsgi, generate_wsgi_form_data
 from ..request import Request
-from ..headers import HeaderBag, Header
 from ..response import Response
 from ..environment import LoadEnvironment
-from ..facades import Config, Session
+from ..facades import Config
 from ..providers.RouteProvider import RouteProvider
 from ..providers.FrameworkProvider import FrameworkProvider
 from ..exceptions import RouteNotFoundException
 from .TestCommand import TestCommand
+from .AddStrAssertions import AddStrAssertions
+from .AddCommonAssertions import AddCommonAssertions
 
 
-class TestCase(unittest.TestCase):
+class TestCase(unittest.TestCase, AddStrAssertions, AddCommonAssertions):
     routes_to_restore = ()
 
     def setUp(self):
@@ -192,18 +192,18 @@ class TestCase(unittest.TestCase):
         self._csrf = False
         return self
 
-    def get(self, route: str, data=None):
+    def get(self, route: str, data=None, content_type=None):
         """Make a GET request route"""
-        return self.fetch(route, data, method="GET")
+        return self.fetch(route, data, method="GET", content_type=content_type)
 
-    def post(self, route: str, data=None):
-        return self.fetch(route, data, method="POST")
+    def post(self, route: str, data=None, content_type=None):
+        return self.fetch(route, data, method="POST", content_type=content_type)
 
-    def put(self, route: str, data=None):
-        return self.fetch(route, data, method="PUT")
+    def put(self, route: str, data=None, content_type=None):
+        return self.fetch(route, data, method="PUT", content_type=content_type)
 
-    def patch(self, route: str, data=None):
-        return self.fetch(route, data, method="PATCH")
+    def patch(self, route: str, data=None, content_type=None):
+        return self.fetch(route, data, method="PATCH", content_type=content_type)
 
     def head(self, route, data=None):
         return self.fetch(route, data, method="HEAD")
@@ -239,22 +239,20 @@ class TestCase(unittest.TestCase):
         return response
 
     def fetch(
-        self, path: str, data: dict = None, method: str = None
+        self, path: str, data: dict = {}, method: str = None, content_type=None
     ) -> "HttpTestResponse":
         """Run an HTTP request and get a test response on which assertions can be run."""
         # prepare WSGI request environment
-        if data is None:
-            data = {}
-
         if not self._csrf:
             token = self.application.make("sign").sign("cookie")
             data.update({"__token": "cookie"})
             http_cookie = f"SESSID={token}; csrf_token={token}"
 
+        # handle submitted data if any
+        wsgi_form_data = generate_wsgi_form_data(data, content_type)
         environ = generate_wsgi(
             {
-                "CONTENT_LENGTH": len(str(json.dumps(data))),
-                "wsgi.input": io.BytesIO(bytes(json.dumps(data), "utf-8")),
+                **wsgi_form_data,
                 "HTTP_COOKIE": http_cookie,
             },
             path=path,

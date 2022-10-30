@@ -1,11 +1,12 @@
-from .Input import Input
 from urllib.parse import parse_qs
 import re
 import json
 import cgi
 import re
+
+from .Input import Input
 from ..utils.structures import data_get
-from ..filesystem.File2 import UploadedFile
+from ..filesystem import UploadedFile
 
 
 class InputBag:
@@ -71,8 +72,8 @@ class InputBag:
                             files.append(
                                 UploadedFile(
                                     fields[name][k].filename,
-                                    fields[name][k].type,
                                     value[k],
+                                    fields[name][k].type,
                                 )
                             )
                             k += 1
@@ -83,8 +84,8 @@ class InputBag:
                                 name: [
                                     UploadedFile(
                                         fields[name].filename,
-                                        fields[name].type,
                                         value,
+                                        fields[name].type,
                                     )
                                 ]
                             }

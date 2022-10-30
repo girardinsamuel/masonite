@@ -64,7 +64,7 @@ class FileSystem:
     def get(path: str) -> str:
         """Get file contents at path."""
         if not FileSystem.is_file(path):
-            raise Exception(f"File does not exist at path: {path}")
+            raise FileNotFoundError(f"File does not exist at path: {path}")
 
         with open(path, "r") as f:
             content = f.read()
@@ -155,7 +155,7 @@ class FileSystem:
         return FileSystem.hash(first_path) == FileSystem.hash(second_path)
 
     @staticmethod
-    def put(path: str, content: str | bytes) -> bool:
+    def put(path: str, content: str | bytes | bytearray) -> bool:
         """Write content to a file."""
         if isinstance(content, (bytes, bytearray)):
             mode = "wb"
@@ -231,7 +231,7 @@ class FileSystem:
 
     @staticmethod
     def filename(path: str) -> str:
-        """Get file basename from a path (with extension)."""
+        """Get file name from a path (without extension)."""
         return os.path.splitext(FileSystem.basename(path))[0]
 
     @staticmethod

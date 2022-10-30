@@ -1,12 +1,11 @@
 import os
-import uuid
-from os.path import isfile, join
-from shutil import copyfile, move
+from typing import List
 
 from ..FileStream import FileStream
 from ..File import File
-from ..File2 import UploadedFile
+from ..UploadedFile import UploadedFile
 from ...utils.filesystem import FileSystem
+from ...utils.collections import Collection, collect
 
 
 class LocalDriver:
@@ -18,113 +17,119 @@ class LocalDriver:
         self.options = options
         return self
 
-    def get_path(self, path):
-        file_path = os.path.join(self.options.get("path"), path)
-        self.make_file_path_if_not_exists(file_path)
-        return file_path
+    def get_path(self, path: str) -> str:
+        """Get absolute path to given path in this locale driver."""
+        abs_path = os.path.join(self.options.get("path"), path)
+        return abs_path
 
-    def get_name(self, path, alias):
+    def get_name(self, path: str, alias: str = None):
+        """
+        /path/to/avatar.jpg -> avatar.jpg
+        /path/to/avatar.jpg, photo -> photo.jpg
+        """
         extension = FileSystem.extension(path)
-        return f"{alias}{extension}"
+        filename = FileSystem.filename(path)
+        if alias:
+            filename = alias
+        return f"{filename}{extension}"
 
-    def put(self, file_path, content):
-        if isinstance(content, (bytes, bytearray)):
-            write_mode = "wb"
+    def size(self, path: str) -> int:
+        return FileSystem.size(self.get_path(path))
+
+    def human_size(self, path: str) -> str:
+        return FileSystem.human_size(self.get_path(path))
+
+    def last_modified(self, path: str) -> float:
+        return FileSystem.last_modified(self.get_path(path))
+
+    def put(self, path: str, content: str | bytes | bytearray):
+        abs_path = self.get_path(path)
+        FileSystem.ensure_directory_exists(FileSystem.dirname(abs_path))
+        return FileSystem.put(abs_path, content)
+
+    def put_file(self, path: str, file: File | UploadedFile):
+        relative_filepath = os.path.join(path, file.hash_name())
+        self.put(relative_filepath, file.get_content())
+        return relative_filepath
+
+    def put_file_as(
+        self, path: str, file: UploadedFile, name: str = "", filename: str = ""
+    ):
+        if name:
+            filename = f"{name}{file.extension}"
+        elif filename:
+            pass
         else:
-            write_mode = "w"
-        with open(self.get_path(os.path.join(file_path)), write_mode) as f:
-            f.write(content)
-        return content
+            raise Exception(
+                "You must provide a name/filename when using put_file_as()."
+            )
+        relative_filepath = os.path.join(path, filename)
+        self.put(relative_filepath, file.get_content())
+        return relative_filepath
 
-    def put_file(self, file_path, content, name=None):
-        if isinstance(content, UploadedFile):
-            file_name = name or content.hash_name()
-        else:
-            file_name = self.get_name(content.name, name or str(uuid.uuid4()))
-
-        if hasattr(content, "get_content"):
-            content = content.get_content()
-
-        if isinstance(content, str):
-            content = bytes(content, "utf-8")
-
-        with open(self.get_path(os.path.join(file_path, file_name)), "wb") as f:
-            f.write(content)
-
-        return os.path.join(file_path, file_name)
-
-    def get(self, file_path):
+    def get(self, path: str) -> "str|None":
         try:
-            with open(self.get_path(file_path), "r") as f:
-                content = f.read()
-
-            return content
+            return FileSystem.get(self.get_path(path))
         except FileNotFoundError:
             return None
 
-    def exists(self, file_path):
-        return os.path.exists(self.get_path(file_path))
+    def exists(self, path: str) -> bool:
+        return FileSystem.exists(self.get_path(path))
 
-    def missing(self, file_path):
-        return not self.exists(file_path)
+    def missing(self, path: str) -> bool:
+        return FileSystem.missing(self.get_path(path))
 
-    def stream(self, file_path):
-        with open(self.get_path(file_path), "r") as f:
-            content = f
-        return FileStream(content)
+    def stream(self, path: str) -> FileStream:
+        content = self.get(self.get_path(path))
+        return FileStream(content, self.get_path(path))
 
-    def copy(self, from_file_path, to_file_path):
-        return copyfile(from_file_path, to_file_path)
+    def copy(self, src: str, destination: str) -> bool:
+        src_path = self.get_path(src)
+        destination_path = self.get_path(destination)
+        return FileSystem.copy(src_path, destination_path)
 
-    def move(self, from_file_path, to_file_path):
-        return move(self.get_path(from_file_path), self.get_path(to_file_path))
+    def move(self, src: str, destination: str) -> bool:
+        src_path = self.get_path(src)
+        destination_path = self.get_path(destination)
+        return FileSystem.move(src_path, destination_path)
 
-    def prepend(self, file_path, content):
-        value = self.get(file_path)
-        content = content + value
-        self.put(file_path, content)
-        return content
+    def prepend(self, path: str, content: str) -> bool:
+        return FileSystem.prepend(self.get_path(path), content)
 
-    def append(self, file_path, content):
-        with open(self.get_path(file_path), "a") as f:
-            f.write(content)
-        return content
+    def append(self, path: str, content: str) -> bool:
+        return FileSystem.append(self.get_path(path), content)
 
-    def delete(self, file_path):
-        return os.remove(self.get_path(file_path))
+    def delete(self, path: str):
+        return FileSystem.delete(self.get_path(path))
 
-    def make_directory(self, directory):
-        pass
+    def make_directory(
+        self, directory_path: str, mode="755", force=False, recursive=True
+    ):
+        return FileSystem.make_directory(
+            self.get_path(directory_path), mode, force, recursive
+        )
 
-    def store(self, file, name=None):
-        if name:
-            name = f"{name}{file.extension()}"
-        full_path = self.get_path(name or file.hash_path_name())
-        with open(full_path, "wb") as f:
-            f.write(file.stream())
+    def delete_directory(self, directory_path: str, preserve: bool = False) -> bool:
+        return FileSystem.delete_directory(self.get_path(directory_path), preserve)
 
-        return full_path
+    def files(self, directory_path: str = "") -> "Collection[File]":
+        filepaths = collect(FileSystem.files(self.get_path(directory_path)))
+        # return filepaths.map_into(File)
+        return filepaths.map_into(
+            lambda filename: File(
+                os.path.join(
+                    self.get_path(directory_path),
+                    filename,
+                )
+            )
+        )
 
-    def make_file_path_if_not_exists(self, file_path):
-        if not os.path.isfile(file_path):
-            if not os.path.exists(os.path.dirname(file_path)):
-                # Create the path to the model if it does not exist
-                os.makedirs(os.path.dirname(file_path))
+    def all_files(self, directory_path: str = "") -> "Collection[File]":
+        filepaths = collect(FileSystem.all_files(self.get_path(directory_path)))
+        return filepaths.map_into(File)
 
-            return True
-
-        return False
-
-    def get_files(self, directory=""):
-        file_path = self.get_path(directory)
-        files = []
-        for f in os.listdir(file_path):
-            if not isfile(join(file_path, f)):
-                continue
-
-            files.append(File(self.get(f), f))
-
-        return files
+    def directories(self, directory_path: str = "") -> "Collection[str]":
+        return collect(FileSystem.directories(self.get_path(directory_path)))
 
     def get_url(self, path: str):
         path = os.path.join("/storage", path)

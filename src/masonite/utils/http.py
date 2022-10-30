@@ -1,4 +1,10 @@
 """Helpers for working with HTTP."""
+import io
+import json
+import os
+import binascii
+from urllib.parse import urlencode
+from src.masonite.filesystem import UploadedFile
 
 
 HTTP_STATUS_CODES = {
@@ -99,3 +105,57 @@ def generate_wsgi(wsgi={}, path="/", query_string="", method="GET"):
     }
     data.update(wsgi)
     return data
+
+
+class RequestFile(UploadedFile):
+    """High-level class to simulate a file coming from an HTTP request in tests."""
+
+    def __init__(self, filename: str, mimetype: str, size=1024, content=None):
+        if size:
+            content = "a" * 1024
+        super().__init__(filename, content, mimetype)
+
+
+def encode_multipart_form_data(data):
+    boundary = binascii.hexlify(os.urandom(16)).decode("ascii")
+    encoded_data = ""
+    for field, value in data.items():
+        if isinstance(value, RequestFile):
+            encoded_data += f'--{boundary}\r\nContent-Disposition: form-data; name="{field}"; filename="{value.filename}"\r\nContent-Type: {value.get_original_mimetype()}\r\n\r\n{value.get_content()}\r\n'
+        else:
+            encoded_data += f'--{boundary}\r\nContent-Disposition: form-data; name="{field}"\r\n\r\n{value}\r\n'
+
+    encoded_data += f"--{boundary}--\r\n\r\n"
+    encoded_data = encoded_data.encode("utf-8")
+    content_type = "multipart/form-data; boundary=%s" % boundary
+
+    return encoded_data, content_type
+
+
+def encode_www_form_urlencode_data(data):
+    boundary = binascii.hexlify(os.urandom(16)).decode("ascii")
+    url_data = urlencode(data)
+    encoded_data = url_data.encode("utf-8")
+    return encoded_data
+
+
+def generate_wsgi_form_data(data={}, content_type="application/json"):
+    if content_type == "application/json":
+        wsgi_input = io.BytesIO(bytes(json.dumps(data), "utf-8"))
+        content_length = len(str(json.dumps(data)))
+    elif content_type == "multipart/form-data":
+        encoded_data, content_type = encode_multipart_form_data(data)
+        wsgi_input = io.BytesIO(encoded_data)
+        content_length = str(len(encoded_data.decode("utf-8")))
+    elif content_type == "application/x-www-form-urlencoded":
+        encoded_data = encode_www_form_urlencode_data(data)
+        wsgi_input = io.BytesIO(encoded_data)
+        content_length = str(len(encoded_data.decode("utf-8")))
+    else:
+        wsgi_input = io.BytesIO(bytes(json.dumps(data), "utf-8"))
+        content_length = len(str(json.dumps(data)))
+    return {
+        "wsgi.input": wsgi_input,
+        "CONTENT_LENGTH": content_length,
+        "CONTENT_TYPE": content_type,
+    }

@@ -1,6 +1,10 @@
 from tests import TestCase
 from src.masonite.routes import Route, HTTPRoute
 from src.masonite.exceptions.exceptions import RouteNotFoundException
+from src.masonite.request import Request
+from src.masonite.utils.http import RequestFile
+from src.masonite.filesystem import UploadedFile
+from src.masonite.facades import Storage
 
 
 class TestHttpRequests(TestCase):
@@ -64,3 +68,15 @@ class TestHttpRequests(TestCase):
 
     def test_options_route(self):
         self.options("/").assertNoContent().assertHasHeader("Allow", "GET, HEAD, POST")
+
+    def test_uploading_file(self):
+        response = self.post(
+            "/upload",
+            {"name": "sam", "avatar": RequestFile("avatar.png", "image/png")},
+            "multipart/form-data",
+        )
+        request_data = response.request.all()
+        self.assertIsInstance(request_data.get("avatar"), UploadedFile)
+        self.assertEqual(request_data.get("avatar").filename, "avatar.png")
+        self.assertEqual(request_data.get("name"), "sam")
+        self.assertTrue(Storage.disk("local").exists("avatars/my_avatar.png"))

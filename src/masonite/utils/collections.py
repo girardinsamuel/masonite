@@ -3,7 +3,7 @@ import random
 import operator
 from functools import reduce
 from dotty_dict import Dotty
-
+from collections.abc import Iterable
 from .structures import data_get
 
 
@@ -244,9 +244,14 @@ class Collection:
                 iterable = item.items()
             elif hasattr(item, "serialize"):
                 iterable = item.serialize().items()
+            elif isinstance(item, object):
+                if isinstance(item, Iterable):
+                    iterable = item
+                else:
+                    attributes.append(self._data_get(item, value))
+                    continue
             else:
                 iterable = self.all().items()
-
             for k, v in iterable:
                 if k == value:
                     if key:

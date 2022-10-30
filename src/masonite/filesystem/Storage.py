@@ -38,6 +38,12 @@ class Storage:
         driver = self.get_driver(self.get_config_options(name).get("driver"))
         return driver.set_options(store_config)
 
+    # TODO: add typing contract of storage driver
+    def build(self, driver_name: str, options: dict = {}) -> Any:
+        """Get a named file driver instance built on the fly with the given options."""
+        driver = self.get_driver(driver_name)
+        return driver.set_options(options)
+
     def get_path(self, path):
         # TODO:???
         return
@@ -60,6 +66,11 @@ class Storage:
 
     def missing(self, file_path):
         return not self.exists(file_path)
+
+    def response(self, file_path, name=None, headers={}, disposition="inline"):
+        from src.masonite.facades import Response
+
+        # return Response.
 
     def download(self, file_path, name=None, headers={}):
         return self.disk().download(file_path, name, headers)
