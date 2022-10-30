@@ -42,19 +42,19 @@ class LocalDriver:
     def last_modified(self, path: str) -> float:
         return FileSystem.last_modified(self.get_path(path))
 
-    def put(self, path: str, content: str | bytes | bytearray):
+    def put(self, path: str, content: str | bytes | bytearray) -> bool:
         abs_path = self.get_path(path)
         FileSystem.ensure_directory_exists(FileSystem.dirname(abs_path))
         return FileSystem.put(abs_path, content)
 
-    def put_file(self, path: str, file: File | UploadedFile):
+    def put_file(self, path: str, file: File | UploadedFile) -> str:
         relative_filepath = os.path.join(path, file.hash_name())
         self.put(relative_filepath, file.get_content())
         return relative_filepath
 
     def put_file_as(
         self, path: str, file: UploadedFile, name: str = "", filename: str = ""
-    ):
+    ) -> str:
         if name:
             filename = f"{name}{file.extension}"
         elif filename:
@@ -99,7 +99,7 @@ class LocalDriver:
     def append(self, path: str, content: str) -> bool:
         return FileSystem.append(self.get_path(path), content)
 
-    def delete(self, path: str):
+    def delete(self, path: str) -> bool:
         return FileSystem.delete(self.get_path(path))
 
     def make_directory(

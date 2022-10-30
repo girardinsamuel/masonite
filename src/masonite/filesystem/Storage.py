@@ -40,70 +40,92 @@ class Storage:
 
     # TODO: add typing contract of storage driver
     def build(self, driver_name: str, options: dict = {}) -> Any:
-        """Get a named file driver instance built on the fly with the given options."""
+        """Get a storage driver instance based on the given driver built on the fly with the given options."""
         driver = self.get_driver(driver_name)
         return driver.set_options(options)
 
-    def get_path(self, path):
-        # TODO:???
-        return
+    def get_path(self, path: str) -> str:
+        """Get absolute path to given path for default driver."""
+        return self.disk("default").get_path(path)
 
-    def get_name(self, path, alias):
-        # TODO ?????
-        return
+    def get_name(self, path: str, alias: str = None):
+        return self.disk("default").get_name(path, alias)
 
-    def put(self, file_path, content):
-        return relative_path
+    def size(self, path: str) -> int:
+        return self.disk("default").size(path)
 
-    def put_file(self, file_path, content, name=None):
-        return relative_path
+    def human_size(self, path: str) -> str:
+        return self.disk("default").human_size(path)
 
-    def get(self, file_path: str):
-        return self.disk().get(file_path)
+    def last_modified(self, path: str) -> float:
+        return self.disk("default").last_modified(path)
 
-    def exists(self, file_path):
-        return os.path.exists(self.get_path(file_path))
+    def put(self, path: str, content: str | bytes | bytearray):
+        return self.disk("default").put(path, content)
 
-    def missing(self, file_path):
-        return not self.exists(file_path)
+    def put_file(self, path: str, file: File | UploadedFile):
+        return self.disk("default").put_file(path, file)
 
+    def put_file_as(
+        self, path: str, file: UploadedFile, name: str = "", filename: str = ""
+    ):
+        return self.disk("default").put_file_as(path, file, name, filename)
+
+    def get(self, path: str) -> "str|None":
+        return self.disk("default").get(path)
+
+    def exists(self, path: str) -> bool:
+        return self.disk("default").exists(path)
+
+    def missing(self, path: str) -> bool:
+        return self.disk("default").missing(path)
+
+    def stream(self, path: str) -> FileStream:
+        return self.disk("default").stream(path)
+
+    def copy(self, src: str, destination: str) -> bool:
+        return self.disk("default").copy(src, destination)
+
+    def move(self, src: str, destination: str) -> bool:
+        return self.disk("default").move(src, destination)
+
+    def prepend(self, path: str, content: str) -> bool:
+        return self.disk("default").prepend(path, content)
+
+    def append(self, path: str, content: str) -> bool:
+        return self.disk("default").append(path, content)
+
+    def delete(self, path: str):
+        return self.disk("default").delete(path)
+
+    def make_directory(
+        self, directory_path: str, mode="755", force=False, recursive=True
+    ):
+        return self.disk("default").make_directory(
+            directory_path, mode, force, recursive
+        )
+
+    def delete_directory(self, directory_path: str, preserve: bool = False) -> bool:
+        return self.disk("default").delete_directory(directory_path, preserve)
+
+    def files(self, directory_path: str = "") -> "Collection[File]":
+        return self.disk("default").files(directory_path)
+
+    def all_files(self, directory_path: str = "") -> "Collection[File]":
+        return self.disk("default").all_files(directory_path)
+
+    def directories(self, directory_path: str = "") -> "Collection[str]":
+        return self.disk("default").directories(directory_path)
+
+    def get_url(self, path: str):
+        return self.disk("default").get_url(path)
+
+    # TODO:
     def response(self, file_path, name=None, headers={}, disposition="inline"):
         from src.masonite.facades import Response
 
         # return Response.
 
+    # TODO:
     def download(self, file_path, name=None, headers={}):
         return self.disk().download(file_path, name, headers)
-
-    def stream(self, file_path):
-        return FileStream(content)
-
-    def copy(self, from_file_path, to_file_path):
-        return
-
-    def move(self, from_file_path, to_file_path):
-        return
-
-    def prepend(self, file_path, content):
-        return
-
-    def append(self, file_path, content):
-        return
-
-    def delete(self, file_path):
-        return
-
-    def make_directory(self, directory):
-        pass
-
-    def store(self, file, name=None):
-        return relative_path
-
-    def make_file_path_if_not_exists(self, file_path):
-        return
-
-    def get_files(self, directory=""):
-        return files
-
-    def get_url(self, path: str):
-        return self.disk().get_url()
