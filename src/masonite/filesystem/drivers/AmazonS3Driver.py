@@ -1,13 +1,14 @@
 import os
-import uuid
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..foundation import Application
     from boto3 import Session as S3Session, Bucket as S3Bucket
+
 from ..FileStream import FileStream
-from ..File import File
+from .. import UploadedFile, File
 from ...utils.filesystem import FileSystem
+from ...utils.collections import Collection
 
 
 class AmazonS3Driver:
@@ -101,7 +102,7 @@ class AmazonS3Driver:
 
     def stream(self, path: str) -> FileStream:
         return FileStream(
-            self.get_bucket().Object(file_path).get().get("Body").read(),
+            self.get_bucket().Object(path).get().get("Body").read(),
             path,
         )
 
